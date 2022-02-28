@@ -2,41 +2,47 @@ import {
   Controller,
   Get,
   Post,
-  Body,
-  Patch,
   Param,
+  Patch,
+  Put,
   Delete,
+  Body,
+  Req,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { ReverseService } from './reverse.service';
-import { CreateReverseDto } from './dto/create-reverse.dto';
-import { UpdateReverseDto } from './dto/update-reverse.dto';
 
 @Controller('reverse')
 export class ReverseController {
   constructor(private readonly reverseService: ReverseService) {}
 
-  @Post()
-  create(@Body() createReverseDto: CreateReverseDto) {
-    return this.reverseService.create(createReverseDto);
+  @Get(':name/*')
+  get(@Req() req: Request, @Param('name') name: string) {
+    console.log(req.url);
+    return this.reverseService.get();
   }
 
-  @Get()
-  findAll() {
-    return this.reverseService.findAll();
+  @Post(':name/*')
+  post(@Req() req: Request, @Body() body: any, @Param('name') name: string) {
+    console.log(req);
+    return this.reverseService.post();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.reverseService.findOne(+id);
+  @Patch(':name/*')
+  patch(@Req() req: Request, @Body() body: any, @Param('name') name: string) {
+    console.log(req);
+    return this.reverseService.patch();
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateReverseDto: UpdateReverseDto) {
-    return this.reverseService.update(+id, updateReverseDto);
+  @Put(':name/*')
+  put(@Req() req: Request, @Body() body: any, @Param('name') name: string) {
+    console.log(req);
+    return this.reverseService.put();
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.reverseService.remove(+id);
+  @Delete(':name/*')
+  delete(@Req() req: Request, @Param('name') name: string) {
+    console.log(req);
+    return this.reverseService.delete();
   }
 }
