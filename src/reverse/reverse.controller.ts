@@ -18,31 +18,26 @@ export class ReverseController {
 
   @Get(':name/*')
   get(@Req() req: Request, @Param('name') name: string) {
-    console.log(req.url);
     return this.reverseService.get(req);
   }
 
   @Post(':name/*')
   post(@Req() req: Request, @Body() body: any, @Param('name') name: string) {
-    console.log(req);
     return this.reverseService.post(req, body);
   }
 
   @Patch(':name/*')
   patch(@Req() req: Request, @Body() body: any, @Param('name') name: string) {
-    console.log(req);
     return this.reverseService.patch(req, body);
   }
 
   @Put(':name/*')
   put(@Req() req: Request, @Body() body: any, @Param('name') name: string) {
-    console.log(req);
     return this.reverseService.put(req, body);
   }
 
   @Delete(':name/*')
   delete(@Req() req: Request, @Param('name') name: string) {
-    console.log(req);
     return this.reverseService.delete(req);
   }
 }

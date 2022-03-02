@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { Request } from 'express';
@@ -28,6 +29,7 @@ export type AxiosRequestHeaders = Record<string, string | number | boolean>;
 
 interface AxiosRequestConfig {
   method: Method;
+  baseURL: string;
   url: string;
   params: any;
   data?: any;
@@ -35,7 +37,10 @@ interface AxiosRequestConfig {
 }
 @Injectable()
 export class ReverseService {
-  constructor(private httpService: HttpService) {}
+  constructor(
+    private httpService: HttpService,
+    private configService: ConfigService,
+  ) {}
 
   getAxiosRequestConfigByRequest(
     { method, params, query, headers }: Request,
@@ -45,6 +50,7 @@ export class ReverseService {
 
     return {
       method: method as Method,
+      baseURL: this.configService.get<string>('BASE_URL'),
       url: params[0],
       params: query,
       data: body,
