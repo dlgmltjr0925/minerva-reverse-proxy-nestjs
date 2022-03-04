@@ -1,0 +1,53 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  @@map("user")
+}
+
+model Scenario {
+  id          Int     @id @default(autoincrement())
+  userId      Int     @map("user_id")
+  title       String
+  description String  @default("")
+  active      Boolean @default(false)
+
+  @@map("scenario")
+}
+
+model Request {
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  scenarioId Int?      @map("scenarioId")
+  method     String
+  url        String
+  path       String
+  queryParam String    @map("query_param")
+  header     String
+  body       String?
+  response   Response?
+
+  @@map("request")
+}
+
+model Response {
+  id           Int     @id @default(autoincrement())
+  userId       Int     @map("user_id")
+  requestId    Int     @map("request_id")@unique
+  statusCode   Int
+  header       String
+  body         String
+  responseTime Int
+  request      Request @relation(fields: [requestId], references: [id])
+
+  @@map("response")
+}
