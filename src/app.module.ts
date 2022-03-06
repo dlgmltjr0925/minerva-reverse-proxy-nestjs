@@ -2,6 +2,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
+import { PrismaService } from './prisma/prisma.service';
 import { ReverseModule } from './reverse/reverse.module';
 
 @Module({
@@ -12,6 +13,6 @@ import { ReverseModule } from './reverse/reverse.module';
     ReverseModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, PrismaService],
 })
 export class AppModule {}
