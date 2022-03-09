@@ -1,3 +1,4 @@
+import { AxiosResponse } from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
@@ -36,6 +37,11 @@ interface AxiosRequestConfig {
   data?: any;
   headers: any;
 }
+
+interface Response extends AxiosResponse<any, any> {
+  responseTime: number;
+}
+
 @Injectable()
 export class ReverseService {
   constructor(
@@ -44,30 +50,25 @@ export class ReverseService {
     private prismaService: PrismaService,
   ) {}
 
-  getAxiosRequestConfigByRequest(
-    { method, params, query, headers }: Request,
-    body?: any,
-  ): AxiosRequestConfig {
-    delete headers.host;
+  hasBody(method: Method) {
+    return ['put', 'patch', 'post'].includes(method.toLowerCase());
+  }
 
-    console.log({
-      method: method as Method,
-      baseURL: this.configService.get<string>('BASE_URL'),
-      url: params[0],
-      params: query,
-      data: body,
-      headers: {
-        via: 'minerva reverse proxy/1.0.0',
-        ...headers,
-      },
-    });
+  getAxiosRequestConfigByRequest({
+    method,
+    params,
+    query,
+    headers,
+    body,
+  }: Request): AxiosRequestConfig {
+    delete headers.host;
 
     return {
       method: method as Method,
       baseURL: this.configService.get<string>('BASE_URL'),
       url: params[0],
       params: query,
-      data: body,
+      data: this.hasBody(method as Method) ? body : undefined,
       headers: {
         via: 'minerva reverse proxy/1.0.0',
         ...headers,
@@ -75,45 +76,109 @@ export class ReverseService {
     };
   }
 
-  async request(req: Request, body?: any) {
-    const { data } = await this.httpService
-      .request(this.getAxiosRequestConfigByRequest(req, body))
+  async requestForServerData(request: Request): Promise<Response> {
+    const start = new Date();
+    const response = await this.httpService
+      .request(this.getAxiosRequestConfigByRequest(request))
       .toPromise();
 
-    return data;
+    return {
+      ...response,
+      responseTime: new Date().valueOf() - start.valueOf(),
+    };
   }
 
-  async requestScenario(req: Request, body?: any) {
+  async requestForScenario(testerId: number, request: Request) {
     const response = await this.prismaService.request.findFirst({
-      where: {
-        url: req.originalUrl,
-      },
       include: {
         scenario: true,
+      },
+      where: {
+        url: request.originalUrl,
+        scenario: {
+          active: true,
+          tester: {
+            id: testerId,
+          },
+        },
       },
     });
 
     return response;
   }
 
-  async get(req: Request): Promise<any> {
-    console.log(await this.requestScenario(req));
-    return await this.request(req);
+  async createRequest(testerId: number, request: Request) {
+    const { method, originalUrl, params, query, headers, body } = request;
+
+    return await this.prismaService.request.create({
+      select: {
+        id: true,
+      },
+      data: {
+        method,
+        testerId,
+        url: originalUrl,
+        path: params[0],
+        query: JSON.stringify(query),
+        headers: JSON.stringify(headers),
+        body: JSON.stringify(body),
+      },
+    });
   }
 
-  async post(req: Request, body: any) {
-    return await this.request(req, body);
+  async createResponse(
+    testerId: number,
+    requestId: number,
+    response: Response,
+  ) {
+    const { status, headers, data, responseTime } = response;
+
+    await this.prismaService.response.create({
+      data: {
+        testerId,
+        requestId,
+        status,
+        headers: JSON.stringify(headers),
+        body: JSON.stringify(data),
+        responseTime,
+      },
+    });
   }
 
-  async patch(req: Request, body: any) {
-    return await this.request(req, body);
+  async create(testerId: number, request: Request, response?: Response) {
+    const { id } = await this.createRequest(testerId, request);
+    if (response) this.createResponse(testerId, id, response);
   }
 
-  async put(req: Request, body: any) {
-    return await this.request(req, body);
+  async request(testerId: number, request: Request) {
+    const scenarioResponse = await this.requestForScenario(testerId, request);
+
+    if (scenarioResponse) return scenarioResponse;
+
+    const response = await this.requestForServerData(request);
+
+    this.create(testerId, request, response);
+
+    return response.data;
   }
 
-  async delete(req: Request) {
-    return await this.request(req);
+  async get(testerId: number, request: Request) {
+    return await this.request(testerId, request);
+  }
+
+  async post(testerId: number, request: Request) {
+    return await this.request(testerId, request);
+  }
+
+  async patch(testerId: number, request: Request) {
+    return await this.request(testerId, request);
+  }
+
+  async put(testerId: number, request: Request) {
+    return await this.request(testerId, request);
+  }
+
+  async delete(testerId: number, request: Request) {
+    return await this.request(testerId, request);
   }
 }

@@ -6,8 +6,8 @@ import {
   Patch,
   Put,
   Delete,
-  Body,
   Req,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ReverseService } from './reverse.service';
@@ -16,28 +16,34 @@ import { ReverseService } from './reverse.service';
 export class ReverseController {
   constructor(private readonly reverseService: ReverseService) {}
 
-  @Get(':name/*')
-  get(@Req() req: Request, @Param('name') name: string) {
-    return this.reverseService.get(req);
+  @Get(':testerId/*')
+  get(@Req() req: Request, @Param('testerId', ParseIntPipe) testerId: number) {
+    return this.reverseService.get(testerId, req);
   }
 
-  @Post(':name/*')
-  post(@Req() req: Request, @Body() body: any, @Param('name') name: string) {
-    return this.reverseService.post(req, body);
+  @Post(':testerId/*')
+  post(@Req() req: Request, @Param('testerId', ParseIntPipe) testerId: number) {
+    return this.reverseService.post(testerId, req);
   }
 
-  @Patch(':name/*')
-  patch(@Req() req: Request, @Body() body: any, @Param('name') name: string) {
-    return this.reverseService.patch(req, body);
+  @Patch(':testerId/*')
+  patch(
+    @Req() req: Request,
+    @Param('testerId', ParseIntPipe) testerId: number,
+  ) {
+    return this.reverseService.patch(testerId, req);
   }
 
-  @Put(':name/*')
-  put(@Req() req: Request, @Body() body: any, @Param('name') name: string) {
-    return this.reverseService.put(req, body);
+  @Put(':testerId/*')
+  put(@Req() req: Request, @Param('testerId', ParseIntPipe) testerId: number) {
+    return this.reverseService.put(testerId, req);
   }
 
-  @Delete(':name/*')
-  delete(@Req() req: Request, @Param('name') name: string) {
-    return this.reverseService.delete(req);
+  @Delete(':testerId/*')
+  delete(
+    @Req() req: Request,
+    @Param('testerId', ParseIntPipe) testerId: number,
+  ) {
+    return this.reverseService.delete(testerId, req);
   }
 }

@@ -7,34 +7,37 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id   Int    @id @default(autoincrement())
-  name String
+model Tester {
+  id        Int        @id @default(autoincrement())
+  name      String
+  scenarios Scenario[]
 
-  @@map("user")
+  @@map("tester")
 }
 
 model Scenario {
   id          Int       @id @default(autoincrement())
-  userId      Int       @map("user_id")
+  testerId    Int       @map("tester_id")
   title       String
   description String    @default("")
   active      Boolean   @default(false)
   requests    Request[]
+  tester      Tester      @relation(fields: [testerId], references: [id])
 
   @@map("scenario")
 }
 
 model Request {
   id         Int       @id @default(autoincrement())
-  userId     Int       @map("user_id")
+  testerId   Int       @map("tester_id")
   scenarioId Int?      @map("scenario_id")
   method     String
   url        String
   path       String
-  queryParam String    @map("query_param")
-  header     String
-  body       String?
+  query      String    @map("query")
+  headers    String
+  body       String
+  createdAt  DateTime 
   response   Response?
   scenario   Scenario? @relation(fields: [scenarioId], references: [id])
 
@@ -43,12 +46,12 @@ model Request {
 
 model Response {
   id           Int     @id @default(autoincrement())
-  userId       Int     @map("user_id")
+  testerId     Int     @map("tester_id")
   requestId    Int     @unique @map("request_id")
-  statusCode   Int
-  header       String
+  status       Int
+  headers      String
   body         String
-  responseTime Int
+  responseTime Int     @map("response_time")
   request      Request @relation(fields: [requestId], references: [id])
 
   @@map("response")
