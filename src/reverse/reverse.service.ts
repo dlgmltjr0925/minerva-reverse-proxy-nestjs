@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { Request } from 'express';
 
 export type Method =
@@ -40,6 +41,7 @@ export class ReverseService {
   constructor(
     private httpService: HttpService,
     private configService: ConfigService,
+    private prismaService: PrismaService,
   ) {}
 
   getAxiosRequestConfigByRequest(
@@ -47,6 +49,18 @@ export class ReverseService {
     body?: any,
   ): AxiosRequestConfig {
     delete headers.host;
+
+    console.log({
+      method: method as Method,
+      baseURL: this.configService.get<string>('BASE_URL'),
+      url: params[0],
+      params: query,
+      data: body,
+      headers: {
+        via: 'minerva reverse proxy/1.0.0',
+        ...headers,
+      },
+    });
 
     return {
       method: method as Method,
@@ -69,7 +83,21 @@ export class ReverseService {
     return data;
   }
 
+  async requestScenario(req: Request, body?: any) {
+    const response = await this.prismaService.request.findFirst({
+      where: {
+        url: req.originalUrl,
+      },
+      include: {
+        scenario: true,
+      },
+    });
+
+    return response;
+  }
+
   async get(req: Request): Promise<any> {
+    console.log(await this.requestScenario(req));
     return await this.request(req);
   }
 

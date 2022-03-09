@@ -15,11 +15,12 @@ model User {
 }
 
 model Scenario {
-  id          Int     @id @default(autoincrement())
-  userId      Int     @map("user_id")
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
   title       String
-  description String  @default("")
-  active      Boolean @default(false)
+  description String    @default("")
+  active      Boolean   @default(false)
+  requests    Request[]
 
   @@map("scenario")
 }
@@ -27,7 +28,7 @@ model Scenario {
 model Request {
   id         Int       @id @default(autoincrement())
   userId     Int       @map("user_id")
-  scenarioId Int?      @map("scenarioId")
+  scenarioId Int?      @map("scenario_id")
   method     String
   url        String
   path       String
@@ -35,6 +36,7 @@ model Request {
   header     String
   body       String?
   response   Response?
+  scenario   Scenario? @relation(fields: [scenarioId], references: [id])
 
   @@map("request")
 }
@@ -42,7 +44,7 @@ model Request {
 model Response {
   id           Int     @id @default(autoincrement())
   userId       Int     @map("user_id")
-  requestId    Int     @map("request_id")@unique
+  requestId    Int     @unique @map("request_id")
   statusCode   Int
   header       String
   body         String

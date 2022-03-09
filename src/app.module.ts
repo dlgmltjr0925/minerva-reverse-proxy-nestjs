@@ -4,11 +4,11 @@ import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
 import { ReverseModule } from './reverse/reverse.module';
-
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: ['.development.env', '.env'],
+      isGlobal: true,
+      envFilePath: ['.env.development', '.env.production'],
     }),
     ReverseModule,
   ],
