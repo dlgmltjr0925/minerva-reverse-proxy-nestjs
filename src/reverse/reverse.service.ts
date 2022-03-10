@@ -1,9 +1,11 @@
-import { AxiosResponse } from 'axios';
+import * as Axios from 'axios';
+
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { Request, Response } from 'express';
+
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Request } from 'express';
 
 export type Method =
   | 'get'
@@ -38,7 +40,7 @@ interface AxiosRequestConfig {
   headers: any;
 }
 
-interface Response extends AxiosResponse<any, any> {
+interface AxiosResponse extends Axios.AxiosResponse<any, any> {
   responseTime: number;
 }
 
@@ -76,16 +78,24 @@ export class ReverseService {
     };
   }
 
-  async requestForServerData(request: Request): Promise<Response> {
+  async requestForServerData(request: Request): Promise<AxiosResponse> {
     const start = new Date();
-    const response = await this.httpService
-      .request(this.getAxiosRequestConfigByRequest(request))
-      .toPromise();
+    try {
+      const response = await this.httpService
+        .request(this.getAxiosRequestConfigByRequest(request))
+        .toPromise();
 
-    return {
-      ...response,
-      responseTime: new Date().valueOf() - start.valueOf(),
-    };
+      return {
+        ...response,
+        responseTime: new Date().valueOf() - start.valueOf(),
+      };
+    } catch (error) {
+      if (error.response) {
+        error.response.responseTime = new Date().valueOf() - start.valueOf();
+      }
+
+      throw error;
+    }
   }
 
   async requestForScenario(testerId: number, request: Request) {
@@ -129,7 +139,7 @@ export class ReverseService {
   async createResponse(
     testerId: number,
     requestId: number,
-    response: Response,
+    response: AxiosResponse,
   ) {
     const { status, headers, data, responseTime } = response;
 
@@ -139,46 +149,64 @@ export class ReverseService {
         requestId,
         status,
         headers: JSON.stringify(headers),
-        body: JSON.stringify(data),
+        body: typeof data === 'string' ? data : JSON.stringify(data),
         responseTime,
       },
     });
   }
 
-  async create(testerId: number, request: Request, response?: Response) {
+  async create(testerId: number, request: Request, response?: AxiosResponse) {
     const { id } = await this.createRequest(testerId, request);
     if (response) this.createResponse(testerId, id, response);
   }
 
-  async request(testerId: number, request: Request) {
+  async request(testerId: number, request: Request, response: Response) {
     const scenarioResponse = await this.requestForScenario(testerId, request);
 
     if (scenarioResponse) return scenarioResponse;
 
-    const response = await this.requestForServerData(request);
+    try {
+      const AxiosResponse = await this.requestForServerData(request);
 
-    this.create(testerId, request, response);
+      this.create(testerId, request, AxiosResponse);
 
-    return response.data;
+      return response.status(AxiosResponse.status).json(AxiosResponse.data);
+    } catch (error) {
+      if (error.response) {
+        this.create(testerId, request, error.response);
+
+        if (typeof error.response.data === 'string') {
+          return response
+            .status(error.response.status)
+            .send(error.response.data);
+        } else {
+          return response
+            .status(error.response.status)
+            .json(error.response.data);
+        }
+      }
+
+      throw error;
+    }
   }
 
-  async get(testerId: number, request: Request) {
-    return await this.request(testerId, request);
+  async get(testerId: number, request: Request, response: Response) {
+    return await this.request(testerId, request, response);
   }
 
-  async post(testerId: number, request: Request) {
-    return await this.request(testerId, request);
+  async post(testerId: number, request: Request, response: Response) {
+    return await this.request(testerId, request, response);
   }
 
-  async patch(testerId: number, request: Request) {
-    return await this.request(testerId, request);
+  async patch(testerId: number, request: Request, response: Response) {
+    return await this.request(testerId, request, response);
   }
 
-  async put(testerId: number, request: Request) {
-    return await this.request(testerId, request);
+  async put(testerId: number, request: Request, response: Response) {
+    return await this.request(testerId, request, response);
   }
 
-  async delete(testerId: number, request: Request) {
-    return await this.request(testerId, request);
+  async delete(testerId: number, request: Request, response: Response) {
+    return await this.request(testerId, request, response);
   }
 }
