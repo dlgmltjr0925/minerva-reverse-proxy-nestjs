@@ -1,10 +1,9 @@
-import * as Axios from 'axios';
-
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { AxiosResponse, RecordService } from '../record/record.service';
 import { Request, Response } from 'express';
 
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type Method =
@@ -40,16 +39,13 @@ interface AxiosRequestConfig {
   headers: any;
 }
 
-interface AxiosResponse extends Axios.AxiosResponse<any, any> {
-  responseTime: number;
-}
-
 @Injectable()
 export class ReverseService {
   constructor(
     private httpService: HttpService,
     private configService: ConfigService,
     private prismaService: PrismaService,
+    private recordService: RecordService,
   ) {}
 
   hasBody(method: Method) {
@@ -117,49 +113,6 @@ export class ReverseService {
     return response;
   }
 
-  async createRequest(testerId: number, request: Request) {
-    const { method, originalUrl, params, query, headers, body } = request;
-
-    return await this.prismaService.request.create({
-      select: {
-        id: true,
-      },
-      data: {
-        method,
-        testerId,
-        url: originalUrl,
-        path: params[0],
-        query: JSON.stringify(query),
-        headers: JSON.stringify(headers),
-        body: JSON.stringify(body),
-      },
-    });
-  }
-
-  async createResponse(
-    testerId: number,
-    requestId: number,
-    response: AxiosResponse,
-  ) {
-    const { status, headers, data, responseTime } = response;
-
-    await this.prismaService.response.create({
-      data: {
-        testerId,
-        requestId,
-        status,
-        headers: JSON.stringify(headers),
-        body: typeof data === 'string' ? data : JSON.stringify(data),
-        responseTime,
-      },
-    });
-  }
-
-  async create(testerId: number, request: Request, response?: AxiosResponse) {
-    const { id } = await this.createRequest(testerId, request);
-    if (response) this.createResponse(testerId, id, response);
-  }
-
   async request(testerId: number, request: Request, response: Response) {
     const scenarioResponse = await this.requestForScenario(testerId, request);
 
@@ -168,12 +121,12 @@ export class ReverseService {
     try {
       const AxiosResponse = await this.requestForServerData(request);
 
-      this.create(testerId, request, AxiosResponse);
+      this.recordService.create(testerId, request, AxiosResponse);
 
       return response.status(AxiosResponse.status).json(AxiosResponse.data);
     } catch (error) {
       if (error.response) {
-        this.create(testerId, request, error.response);
+        this.recordService.create(testerId, request, error.response);
 
         if (typeof error.response.data === 'string') {
           return response
