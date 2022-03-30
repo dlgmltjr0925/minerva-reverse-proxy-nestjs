@@ -7,6 +7,7 @@ import { ReverseModule } from './reverse/reverse.module';
 import { RecordService } from './record/record.service';
 import { RecordModule } from './record/record.module';
 import { ScenarioModule } from './scenario/scenario.module';
+import { TesterModule } from './tester/tester.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -16,6 +17,7 @@ import { ScenarioModule } from './scenario/scenario.module';
     ReverseModule,
     RecordModule,
     ScenarioModule,
+    TesterModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, RecordService],
