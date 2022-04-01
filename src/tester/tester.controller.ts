@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  HttpCode,
+} from '@nestjs/common';
 import { TesterService } from './tester.service';
 import { CreateTesterDto } from './dto/create-tester.dto';
 import { UpdateTesterDto } from './dto/update-tester.dto';
@@ -8,27 +17,66 @@ export class TesterController {
   constructor(private readonly testerService: TesterService) {}
 
   @Post()
-  create(@Body() createTesterDto: CreateTesterDto) {
-    return this.testerService.create(createTesterDto);
+  async create(@Body() createTesterDto: CreateTesterDto) {
+    const tester = await this.testerService.create(createTesterDto);
+
+    return {
+      data: {
+        tester,
+      },
+      meta: {},
+    };
   }
 
-  @Get()
-  findAll() {
-    return this.testerService.findAll();
+  @Get('search/:keyword')
+  async findAll(@Param('keyword') keyword: string) {
+    const testers = await this.testerService.findAll(keyword);
+
+    return {
+      data: {
+        testers,
+      },
+      meta: {},
+    };
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.testerService.findOne(+id);
+  @Get(':name')
+  @HttpCode(200)
+  async findOne(@Param('name') name: string) {
+    const tester = await this.testerService.findOne(name);
+
+    return {
+      data: {
+        tester,
+      },
+      meta: {},
+    };
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTesterDto: UpdateTesterDto) {
-    return this.testerService.update(+id, updateTesterDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateTesterDto: UpdateTesterDto,
+  ) {
+    const tester = await this.testerService.update(+id, updateTesterDto);
+
+    return {
+      data: {
+        tester,
+      },
+      meta: {},
+    };
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.testerService.remove(+id);
+  async remove(@Param('id') id: string) {
+    const tester = await this.testerService.remove(+id);
+
+    return {
+      data: {
+        tester,
+      },
+      meta: {},
+    };
   }
 }

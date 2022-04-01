@@ -9,7 +9,7 @@ generator client {
 
 model Tester {
   id        Int        @id @default(autoincrement())
-  name      String
+  name      String     @unique
   scenarios Scenario[]
 
   @@map("tester")
@@ -37,7 +37,6 @@ model Request {
   query      String    @map("query")
   headers    String
   body       String
-  createdAt  DateTime 
   response   Response?
   scenario   Scenario? @relation(fields: [scenarioId], references: [id])
 
