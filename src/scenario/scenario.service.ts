@@ -1,26 +1,57 @@
-import { Injectable } from '@nestjs/common';
 import { CreateScenarioDto } from './dto/create-scenario.dto';
+import { FindAllScenarioDto } from './dto/find-all-scenario.dto';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { UpdateScenarioDto } from './dto/update-scenario.dto';
 
 @Injectable()
 export class ScenarioService {
-  create(createScenarioDto: CreateScenarioDto) {
-    return 'This action adds a new scenario';
+  constructor(private readonly prismaService: PrismaService) {}
+
+  async create(createScenarioDto: CreateScenarioDto) {
+    const scenario = await this.prismaService.scenario.create({
+      data: createScenarioDto,
+    });
+
+    return scenario;
   }
 
-  findAll() {
-    return `This action returns all scenario`;
+  async findAll({ testerId, keyword }: FindAllScenarioDto) {
+    const scenarios = await this.prismaService.scenario.findMany({
+      where: {
+        testerId,
+        OR: [
+          { title: { contains: keyword } },
+          { description: { contains: keyword } },
+        ],
+      },
+    });
+
+    return scenarios;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} scenario`;
+  async findOne(id: number) {
+    const scenario = await this.prismaService.scenario.findUnique({
+      where: { id },
+    });
+
+    return scenario;
   }
 
-  update(id: number, updateScenarioDto: UpdateScenarioDto) {
-    return `This action updates a #${id} scenario`;
+  async update(id: number, updateScenarioDto: UpdateScenarioDto) {
+    const scenario = await this.prismaService.scenario.update({
+      where: { id },
+      data: updateScenarioDto,
+    });
+
+    return scenario;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} scenario`;
+  async remove(id: number) {
+    const scenario = await this.prismaService.scenario.delete({
+      where: { id },
+    });
+
+    return scenario;
   }
 }

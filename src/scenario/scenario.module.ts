@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ScenarioService } from './scenario.service';
+import { PrismaService } from './../prisma/prisma.service';
 import { ScenarioController } from './scenario.controller';
+import { ScenarioService } from './scenario.service';
 
 @Module({
   controllers: [ScenarioController],
-  providers: [ScenarioService]
+  providers: [ScenarioService, PrismaService],
 })
 export class ScenarioModule {}

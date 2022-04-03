@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ScenarioService } from './scenario.service';
 import { CreateScenarioDto } from './dto/create-scenario.dto';
@@ -16,30 +17,77 @@ export class ScenarioController {
   constructor(private readonly scenarioService: ScenarioService) {}
 
   @Post()
-  create(@Body() createScenarioDto: CreateScenarioDto) {
-    return this.scenarioService.create(createScenarioDto);
+  async create(@Body() createScenarioDto: CreateScenarioDto) {
+    const scenario = await this.scenarioService.create(createScenarioDto);
+
+    return {
+      data: {
+        scenario,
+      },
+      meta: {},
+    };
   }
 
-  @Get()
-  findAll() {
-    return this.scenarioService.findAll();
+  @Get('search/:keyword')
+  async search(@Param('keyword') keyword?: string) {
+    const scenarios = await this.scenarioService.findAll({ keyword });
+
+    return {
+      data: {
+        scenarios,
+      },
+      meta: {},
+    };
+  }
+
+  @Get(':testerId')
+  async findAll(@Param('testerId', ParseIntPipe) testerId: number) {
+    const scenarios = await this.scenarioService.findAll({ testerId });
+
+    return {
+      data: {
+        scenarios,
+      },
+      meta: {},
+    };
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.scenarioService.findOne(+id);
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const scenario = await this.scenarioService.findOne(id);
+
+    return {
+      data: {
+        scenario,
+      },
+      meta: {},
+    };
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateScenarioDto: UpdateScenarioDto,
   ) {
-    return this.scenarioService.update(+id, updateScenarioDto);
+    const scenario = await this.scenarioService.update(+id, updateScenarioDto);
+
+    return {
+      data: {
+        scenario,
+      },
+      meta: {},
+    };
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.scenarioService.remove(+id);
+  async remove(@Param('id') id: string) {
+    const scenario = await this.scenarioService.remove(+id);
+
+    return {
+      data: {
+        scenario,
+      },
+      meta: {},
+    };
   }
 }
