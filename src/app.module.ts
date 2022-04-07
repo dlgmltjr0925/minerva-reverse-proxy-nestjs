@@ -8,6 +8,7 @@ import { RecordService } from './record/record.service';
 import { RecordModule } from './record/record.module';
 import { ScenarioModule } from './scenario/scenario.module';
 import { TesterModule } from './tester/tester.module';
+import { HistoryModule } from './history/history.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -18,6 +19,7 @@ import { TesterModule } from './tester/tester.module';
     RecordModule,
     ScenarioModule,
     TesterModule,
+    HistoryModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService, RecordService],
