@@ -36,6 +36,18 @@ export class HistoryService {
       },
     });
 
-    return histories;
+    return histories.map((history) => ({
+      ...history,
+      query: JSON.parse(history.query),
+      headers: JSON.parse(history.headers),
+      body: JSON.parse(history.body),
+      response: history.response
+        ? {
+            ...history.response,
+            headers: JSON.parse(history.response.headers),
+            body: JSON.parse(history.response.body),
+          }
+        : null,
+    }));
   }
 }
